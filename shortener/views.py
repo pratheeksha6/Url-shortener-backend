@@ -36,6 +36,13 @@ def shorten_url(request):
             status=status.HTTP_400_BAD_REQUEST
         )
        
+    existing_url = Url.objects.filter(long_url=long_url).first()
+    if existing_url:
+        return Response({
+            'shortUrl': f'http://127.0.0.1:8000/api/v1/short-codes/{existing_url.short_code}',
+            'longUrl':long_url,
+            'createdAt':existing_url.created_at
+        },status=status.HTTP_200_OK)
     
     short_code = generate_short_code()
     url = Url.objects.create(
@@ -58,4 +65,19 @@ def redirect_url(request,short_code):
         return Response(
             {'message' : 'Short code not found'},
             status = status.HTTP_404_NOT_FOUND
+        )
+    
+@api_view(['DELETE'])
+def delete_url(request,short_code):
+    try:
+        url=Url.objects.get(short_code=short_code)
+        url.delete()
+        return Response(
+            {'message':'URL deleted successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Url.DoesNotExist:
+        return Response(
+            {'message':'Short_code not found'},
+            status=status.HTTP_404_NOT_FOUND
         )
